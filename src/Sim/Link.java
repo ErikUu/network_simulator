@@ -39,23 +39,20 @@ public class Link extends SimEnt{
 
 	// Called when a message enters the link
 	
-	public void recv(SimEnt src, Event ev)
-	{
+	public void recv(SimEnt src, Event ev) {
 
-		if ((ev instanceof Message || ev instanceof RouterAdvertisement || ev instanceof RouterSolicitation) && isDropped(dropRatio))
-		{
+		if ((_connectorA != null && _connectorB != null) && isDropped(dropRatio)) {
 			System.out.println("Link recv msg, passes it through");
+
 			if (src == _connectorA)
-			{
 				send(_connectorB, ev, _now+randomDelay(delayRange));
-			}
 			else
-			{
 				send(_connectorA, ev, _now+randomDelay(delayRange));	
-			}
+
 		} else {
 			System.out.println("packet was dropped");
 		}
+
 	}
 	
 	//Returns true/false depending on given chance

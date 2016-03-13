@@ -9,6 +9,8 @@ public class Run {
  		//Creates two links (param1: jitter range, param2: drop chance)
  		Link link1 = new Link(0, 100);
 		Link link2 = new Link(0, 100);
+		Link link3 = new Link(0, 100);
+
 		
 		// Create two end hosts that will be
 		// communicating via the router
@@ -27,6 +29,7 @@ public class Run {
 		Router routeNode = new Router(10);
 		routeNode.connectInterface(0, link1, host1);
 		routeNode.connectInterface(1, link2, host2);
+        routeNode.connectInterface(5, link3, null);
 
         routeNode.printInterfaces();
 

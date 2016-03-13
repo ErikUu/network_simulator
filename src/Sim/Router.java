@@ -49,7 +49,7 @@ public class Router extends SimEnt{
 	{
 		SimEnt routerInterface=null;
 		for(int i=0; i<_interfaces; i++)
-			if (_routingTable[i] != null)
+			if (_routingTable[i] != null && _routingTable[i].node() != null)
 			{
 				if (((Node) _routingTable[i].node()).getAddr().networkId() == networkAddress)
 				{
@@ -94,7 +94,7 @@ public class Router extends SimEnt{
         System.out.println("-----------");
         for(int i=0; i<_interfaces; i++){
             if (_routingTable[i] != null) {
-                System.out.println("Pos" + i + ": " + _routingTable[i].node());
+                System.out.println("Pos" + i + ": " + _routingTable[i].node() + "  |  Link: " + _routingTable[i].link());
             } else {
                 System.out.println("Pos" + i + ": null" );
             }
@@ -118,7 +118,7 @@ public class Router extends SimEnt{
 
         for (int i = 0; i < _interfaces; i++){
 
-            if (_routingTable[i] != null && ((Node) _routingTable[i].node()).getAddr().networkId() != source.networkId()){
+            if (_routingTable[i] != null){
                 SimEnt sendNext = _routingTable[i].link();
                 send(sendNext, new RouterAdvertisement(counter), _now);
             }
@@ -147,9 +147,9 @@ public class Router extends SimEnt{
                 }
                 System.out.println("Router sends to node: " + ((Message) event).destination().networkId()+"." + ((Message) event).destination().nodeId());
             } else {
-                NetworkAddr tempid = homeAgent.getCoa(id);
-                sendNext = getInterface(tempid.networkId());
-                System.out.println("HA sends to node: " + tempid.networkId() + "." + tempid.nodeId());
+                NetworkAddr coa = homeAgent.getCoa(id);
+                sendNext = getInterface(coa.networkId());
+                System.out.println("HA sends to node: " + coa.networkId() + "." + coa.nodeId());
             }
 
             send (sendNext, event, _now);
