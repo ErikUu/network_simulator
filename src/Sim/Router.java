@@ -2,6 +2,7 @@ package Sim;
 
 // This class implements a simple router
 
+import com.sun.org.apache.xpath.internal.operations.String;
 import com.sun.xml.internal.bind.v2.TODO;
 import sun.nio.ch.Net;
 
@@ -62,8 +63,8 @@ public class Router extends SimEnt{
     //changes given nodes interface. returns old interface if successful, 0 otherwise.
 	private int switchInterface(int networkAddress, int newInterface){
 
-        SimEnt routerInterface = null;
-        SimEnt routerNode = null;
+        SimEnt oldLink    = null;
+        SimEnt movingNode = null;
         int _oldInterface = 0;
 
         for(int i=0; i<_interfaces; i++){
@@ -72,13 +73,23 @@ public class Router extends SimEnt{
             {
                 if (((Node) _routingTable[i].node()).getAddr().networkId() == networkAddress)
                 {
-                    routerInterface = _routingTable[i].link();
-                    routerNode      = _routingTable[i].node();
+                    oldLink         = _routingTable[i].link();
+                    movingNode      = _routingTable[i].node();
                     _oldInterface   = i;
+                    SimEnt newLink  = _routingTable[newInterface].link();
 
-                    _routingTable[newInterface] = new RouteTableEntry(routerInterface, routerNode);
-                    _routingTable[i] = null;
-                    send(routerNode, new TimerEvent(), 30);
+                    //Set new peer for node
+                    ((Node)movingNode).setPeer(newLink);
+
+                    //remove node as peer on old link
+                    ((Link)oldLink).removePeer(movingNode);
+
+                    //Update route table
+                    _routingTable[newInterface] = new RouteTableEntry(newLink, movingNode);
+                    _routingTable[i]            = new RouteTableEntry(oldLink, null);
+
+                    //send event
+                    //send(movingNode, new TimerEvent(), 30);
                     return _oldInterface;
 
                 }
@@ -142,7 +153,7 @@ public class Router extends SimEnt{
             if (homeAgent == null || homeAgent.getCoa(id) == null) {
                 sendNext = getInterface(((Message) event).destination().networkId());
                 if (sendNext == null){
-                    System.out.println("Receive not found in table, Packet was dropped");
+                    System.out.println("Receiver not found in table, Packet was dropped");
                     return;
                 }
                 System.out.println("Router sends to node: " + ((Message) event).destination().networkId()+"." + ((Message) event).destination().nodeId());

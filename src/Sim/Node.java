@@ -76,7 +76,7 @@ public class Node extends SimEnt {
 
     public void move(Router r, int newInterface, int delay, NetworkAddr id){
         send(r, new Move(this, newInterface, id), delay);
-		send(_peer, new RouterSolicitation(id), delay);
+		send(r, new RouterSolicitation(id), delay);
     }
 
 
