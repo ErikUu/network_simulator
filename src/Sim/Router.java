@@ -60,7 +60,12 @@ public class Router extends SimEnt{
             return null;
 	}
 
-    //changes given nodes interface. returns old interface if successful, 0 otherwise.
+    /**
+     *
+     * @param networkAddress is the network address that wants to change interface
+     * @param newInterface is the new interface
+     * @return old interface
+     */
 	private int switchInterface(int networkAddress, int newInterface){
 
         SimEnt oldLink    = null;
@@ -97,10 +102,13 @@ public class Router extends SimEnt{
         }
 
         //If no interface match was found
-        return 0;
+        return newInterface;
 
     }
 
+    /**
+     * Prints interfaces in console
+     */
     public void printInterfaces(){
         System.out.println("-----------");
         for(int i=0; i<_interfaces; i++){
@@ -117,55 +125,81 @@ public class Router extends SimEnt{
         n.set_id(newId);
     }
 
-    private void broadcastFreeInterfaces(NetworkAddr source){
-
+    /**
+     * Counts all free interfaces
+     * @return free interfaces
+     */
+    private int freeInterfaces() {
         int counter = 0;
-
-        for(int i = 0; i < _interfaces; i++){
-            if (_routingTable[i] == null){
+        for (int i = 0; i < _interfaces; i++) {
+            if (_routingTable[i] == null) {
                 counter++;
             }
         }
+        return counter;
+    }
 
+    /**
+     * Broadcasts on all links
+     */
+    private void broadcast(Event e){
         for (int i = 0; i < _interfaces; i++){
 
             if (_routingTable[i] != null){
                 SimEnt sendNext = _routingTable[i].link();
-                send(sendNext, new RouterAdvertisement(counter), _now);
+                send(sendNext, e, _now);
             }
-
         }
-
     }
 
-	// When messages are received at the router this method is called
+    /**
+     * Receive function for router. Handles message-, move-, RouterSolicitation- events
+     * @param source is where the event was sent from last
+     * @param event is the event received
+     */
 	public void recv(SimEnt source, Event event)
 	{
 
-		if (event instanceof Message)
+        /**
+         * If the router is NOT running a Home Agent(HA) or the Care Of Address(CoA) for the node is NOT set, the router forwards
+         * the packet to the destination if exists in routing table.
+         *
+         * Else get the CoA from the HA and forwards the packet
+         */
+        if (event instanceof Message)
 		{
             SimEnt sendNext;
-            NetworkAddr destination = ((Message) event).destination();
-            NetworkAddr id = new NetworkAddr(destination.networkId(), destination.nodeId());
+            NetworkAddr destination     = ((Message) event).destination();
+            NetworkAddr destinationId   = new NetworkAddr(destination.networkId(), destination.nodeId());
 
 			System.out.println("Router handles packet with seq: " + ((Message) event).seq()+" from node: "+((Message) event).source().networkId()+"." + ((Message) event).source().nodeId() );
 
-            if (homeAgent == null || homeAgent.getCoa(id) == null) {
+            if (homeAgent == null || homeAgent.getCoa(destinationId) == null) {
+
                 sendNext = getInterface(((Message) event).destination().networkId());
+
                 if (sendNext == null){
-                    System.out.println("Receiver not found in table, Packet was dropped");
+                    System.out.println("Receiver not found in routing table, Packet was dropped");
                     return;
                 }
+
                 System.out.println("Router sends to node: " + ((Message) event).destination().networkId()+"." + ((Message) event).destination().nodeId());
+
             } else {
-                NetworkAddr coa = homeAgent.getCoa(id);
+
+                NetworkAddr coa = homeAgent.getCoa(destinationId);
                 sendNext = getInterface(coa.networkId());
                 System.out.println("HA sends to node: " + coa.networkId() + "." + coa.nodeId());
+
             }
 
             send (sendNext, event, _now);
+
         }
 
+        /**
+         * Changes location (network address and interface). Only works on the same router.
+         */
 		if(event instanceof Move) {
 
             //Properties from node
@@ -176,9 +210,8 @@ public class Router extends SimEnt{
             int _newInterface    = ((Move) event).getNewInterface();
             NetworkAddr _newId   = ((Move) event).getId();
 
-
             //switch interface
-			int _oldInterface = switchInterface(_id.networkId(), _newInterface);
+			int _oldInterface    = switchInterface(_id.networkId(), _newInterface);
 
             //change to new address
             changeNetworkAddress(n, _newId);
@@ -189,20 +222,24 @@ public class Router extends SimEnt{
                 homeAgent.registerNewLocation(n, _newId);
             }
 
-            //Prints
             System.out.println("Node " + _id.networkId() + "." + _id.nodeId() + " switched to network " + _newId.networkId() + "." + _newId.nodeId());
             System.out.println("Node " + _newId.networkId() + "." + _newId.nodeId() + " switched to interface " + _newInterface + " from interface " + _oldInterface);
             printInterfaces();
 
         }
 
+        /**
+         * Broadcasts Router Advertisement (only containing available interfaces at the moment)
+         */
         if(event instanceof RouterSolicitation) {
+
             NetworkAddr _sourceId = ((RouterSolicitation) event).getSource();
             System.out.println("Router recived solicitation from node " + _sourceId.networkId() + "." + _sourceId.nodeId());
 
-            broadcastFreeInterfaces(_sourceId);
-
+            Event advertisement = new RouterAdvertisement(freeInterfaces());
+            broadcast(advertisement);
             System.out.println("Router broadcasted advertisement");
+
         }
 
 
