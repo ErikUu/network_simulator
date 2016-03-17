@@ -37,17 +37,31 @@ public class Link extends SimEnt{
 			_connectorB=connectTo;
 	}
 
+	public void removePeer(SimEnt ent){
+		if(_connectorA == ent)
+			_connectorA = null;
+		else
+			_connectorB = null;
+
+	}
+
 	// Called when a message enters the link
 	
 	public void recv(SimEnt src, Event ev) {
 
-		if ((_connectorA != null && _connectorB != null) && isDropped(dropRatio)) {
+		if (isDropped(dropRatio)) {
+
 			System.out.println("Link recv msg, passes it through");
 
-			if (src == _connectorA)
+			if (src  == _connectorA && _connectorB != null){
 				send(_connectorB, ev, _now+randomDelay(delayRange));
-			else
-				send(_connectorA, ev, _now+randomDelay(delayRange));	
+			}
+			else if(src  == _connectorB && _connectorA != null) {
+				send(_connectorA, ev, _now+randomDelay(delayRange));
+			} else {
+				System.out.println("packet was dropped");
+			}
+
 
 		} else {
 			System.out.println("packet was dropped");
