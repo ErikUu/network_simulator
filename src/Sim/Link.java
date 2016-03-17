@@ -51,13 +51,14 @@ public class Link extends SimEnt{
 
 		if (isDropped(dropRatio)) {
 
-			System.out.println("Link recv msg, passes it through");
+			double randomDelay = randomDelay(delayRange);
+			System.out.println("Link recv msg, passes it through, delay " + randomDelay);
 
 			if (src  == _connectorA && _connectorB != null){
-				send(_connectorB, ev, _now+randomDelay(delayRange));
+				send(_connectorB, ev, _now+randomDelay);
 			}
 			else if(src  == _connectorB && _connectorA != null) {
-				send(_connectorA, ev, _now+randomDelay(delayRange));
+				send(_connectorA, ev, _now+randomDelay);
 			} else {
 				System.out.println("packet was dropped");
 			}
@@ -77,7 +78,6 @@ public class Link extends SimEnt{
 	//calculates random delay between 0 - range
 	private double randomDelay(int range){
 		int r = (int) (Math.random() * (range - 0)) + 0;
-		System.out.println("Link delay:      " + r);
 		return r;
 	}
 	
