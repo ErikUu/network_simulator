@@ -6,7 +6,7 @@ import java.util.LinkedList;
 /**
  * Created by erikuusitalo on 05/03/16.
  */
-public class HomeAgentBuffer<T> {
+public class Buffer<T> {
 
     /**
      * Creates empty Linked list
@@ -21,7 +21,7 @@ public class HomeAgentBuffer<T> {
      * @param bufferSize is the fixed size of the buffer
      * @param TTL is the fixed time to live for each entry
      */
-    public HomeAgentBuffer(int bufferSize, int TTL) {
+    public Buffer(int bufferSize, int TTL) {
         this.bufferSize = bufferSize;
         this.TTL        = TTL;
     }
