@@ -34,7 +34,14 @@ public class Node extends SimEnt {
 			 ((Link) _peer).setConnector(this);
 		}
 	}
-	
+
+	public void connect(int delay, SimEnt link){
+		send(this, new Connect(link), delay);
+	}
+
+	public void disconnect(int delay){
+		send(this, new Disconnect(), delay);
+	}
 	
 	public NetworkAddr getAddr()
 	{
@@ -76,7 +83,7 @@ public class Node extends SimEnt {
 
     public void move(Router r, int newInterface, int delay, NetworkAddr id){
         send(r, new Move(this, newInterface, id), delay);
-		send(r, new RouterSolicitation(id), delay);
+		send(r, new RouterSolicitation(id), delay+1);
     }
 
 
@@ -153,6 +160,23 @@ public class Node extends SimEnt {
 			int freeInterfaces = ((RouterAdvertisement) ev).getFreeInterfaces();
 			System.out.println("Node " + _id.networkId() + "." + _id.nodeId() + " received router advertisement, " + freeInterfaces + " free interfaces.");
 		}
+
+		if (ev instanceof Connect) {
+			if (_peer == null){
+				setPeer( ((Connect) ev).getLink() );
+				System.out.println("Node " + _id.networkId() + "." + _id.nodeId() + " CONNECTED to link");
+			}
+		}
+
+		if (ev instanceof Disconnect) {
+			if (_peer != null) {
+				((Link)_peer).removePeer(this);
+				_peer = null;
+				System.out.println("Node " + _id.networkId() + "." + _id.nodeId() + " DISCONNECTED from link");
+			}
+		}
+
+
 	}
 	
 	void fileWrite(double n){
