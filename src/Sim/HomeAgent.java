@@ -12,13 +12,13 @@ public class HomeAgent{
     private Map<String, String> ipMap = new HashMap<String, String>();
     private Map<Node, String> hoaMap = new HashMap<Node, String>();
 
-    private HomeAgentBuffer<Message> buffer;
+    private Buffer<Message> buffer;
 
     public HomeAgent(){}
 
     public HomeAgent(int buffterSize, int TTL) {
         this();
-        buffer = new HomeAgentBuffer<>(buffterSize, TTL);
+        buffer = new Buffer<>(buffterSize, TTL);
     }
 
     /**
