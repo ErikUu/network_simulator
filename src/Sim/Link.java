@@ -1,7 +1,5 @@
 package Sim;
 
-import java.text.DecimalFormat;
-
 // This class implements a link without any loss, jitter or delay
 
 public class Link extends SimEnt{
@@ -45,28 +43,43 @@ public class Link extends SimEnt{
 
 	}
 
-	// Called when a message enters the link
+	/**
+	 * Forwards event to next destination
+	 * @param src is the sending source
+	 * @param ev is the event
+     * @return true if send forward was successful else false
+     */
+	private boolean forwardEvent(SimEnt src, Event ev){
+		double randomDelay = randomDelay(delayRange);
+		System.out.println("Link recv msg, passes it through, delay " + randomDelay);
+
+		if (src  == _connectorA && _connectorB != null){
+			send(_connectorB, ev, _now+randomDelay);
+		}
+		else if(src  == _connectorB && _connectorA != null) {
+			send(_connectorA, ev, _now+randomDelay);
+		} else {
+			return false;
+		}
+		return true;
+	}
 	
 	public void recv(SimEnt src, Event ev) {
 
-		if (isDropped(dropRatio)) {
-
-			double randomDelay = randomDelay(delayRange);
-			System.out.println("Link recv msg, passes it through, delay " + randomDelay);
-
-			if (src  == _connectorA && _connectorB != null){
-				send(_connectorB, ev, _now+randomDelay);
-			}
-			else if(src  == _connectorB && _connectorA != null) {
-				send(_connectorA, ev, _now+randomDelay);
-			} else {
-				System.out.println("packet was dropped");
-			}
-
-
-		} else {
-			System.out.println("packet was dropped");
+		if (!isDropped(dropRatio)) {
+			System.out.println("Packet was dropped randomly");
+			return;
 		}
+
+		if (ev instanceof Message) {
+			int seq = ((Message) ev).seq();
+			if (!forwardEvent(src, ev))
+				System.out.println("Packet with seq " + seq + " was dropped!");
+		} else {
+			if (!forwardEvent(src, ev))
+				System.out.println("Packet was dropped");
+		}
+
 
 	}
 	
