@@ -8,7 +8,7 @@ public class Run {
 
  		//Creates two links (param1: jitter range, param2: drop chance)
  		Link link1 = new Link(0, 100);
-		Link link2 = new Link(40, 100);
+		Link link2 = new Link(0, 100);
 		Link link3 = new Link(0, 100);
 
 		
@@ -26,7 +26,7 @@ public class Run {
 		// the host connected to the other
 		// side of the link is also provided
 		// Note. A switch is created in same way using the Switch class
-		Router routeNode = new Router(10, new HomeAgent());
+		Router routeNode = new Router(10, new Buffer(10, 50));
 		routeNode.connectInterface(0, link1, host1);
 		routeNode.connectInterface(1, link2, host2);
         routeNode.connectInterface(5, link3, null);
@@ -38,7 +38,7 @@ public class Run {
 		host1.StartSending(2, 1, 5, 50, new ConstantBitRate(10));
 		host2.StartSending(1, 1, 0, 50, new ConstantBitRate(20));
 
-        host2.disconnect(1);
+        host2.disconnect(20);
         host2.connect(40, link2);
 
         //router, interface, delayed time, address to move to

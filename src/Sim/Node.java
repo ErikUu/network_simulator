@@ -164,7 +164,7 @@ public class Node extends SimEnt {
 		if (ev instanceof Connect) {
 			if (_peer == null){
 				setPeer( ((Connect) ev).getLink() );
-				System.out.println("Node " + _id.networkId() + "." + _id.nodeId() + " CONNECTED to link");
+				System.out.println("Node " + _id.networkId() + "." + _id.nodeId() + " CONNECTED to link " + SimEngine.getTime());
 			}
 		}
 
@@ -172,7 +172,7 @@ public class Node extends SimEnt {
 			if (_peer != null) {
 				((Link)_peer).removePeer(this);
 				_peer = null;
-				System.out.println("Node " + _id.networkId() + "." + _id.nodeId() + " DISCONNECTED from link");
+				System.out.println("Node " + _id.networkId() + "." + _id.nodeId() + " DISCONNECTED from link at time " + SimEngine.getTime());
 			}
 		}
 

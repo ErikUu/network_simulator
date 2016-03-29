@@ -10,11 +10,9 @@ public class Router extends SimEnt{
 
 	private RouteTableEntry [] _routingTable;
 	private int _interfaces;
-	private int _now = 0;
-    private HomeAgent homeAgent = null;
-
-	// When created, number of interfaces are defined
-
+	private int _now               = 0;
+    private HomeAgent homeAgent    = null;
+    private Buffer<Message> buffer = null;
 
     Router(int interfaces)
     {
@@ -27,6 +25,18 @@ public class Router extends SimEnt{
 		this(interfaces);
         this.homeAgent = homeAgent;
 	}
+
+    Router(int interfaces, Buffer buffer)
+    {
+        this(interfaces);
+        this.buffer = buffer;
+    }
+
+    Router(int interfaces, HomeAgent homeAgent, Buffer buffer)
+    {
+        this(interfaces, homeAgent);
+        this.buffer = buffer;
+    }
 
 
 	// This method connects links to the router and also informs the
@@ -152,6 +162,28 @@ public class Router extends SimEnt{
         }
     }
 
+    public void sendPacket(SimEnt sendNext, Event event){
+        send (sendNext, event, _now);
+        System.out.println("Router sends to node: " + ((Message) event).destination().networkId()+"." + ((Message) event).destination().nodeId());
+    }
+
+    private void checkBufferMessages(){
+        int i = 0;
+        while(i < buffer.size()){
+            Message m = buffer.get(i);
+            SimEnt sendNext = getInterface(m.destination().networkId());
+            if (sendNext != null && ((Link) sendNext).isOnline()) {
+                send(sendNext, m, _now);
+                buffer.remove(i);
+                System.out.println("Routers buffer sends to node: " + m.destination().networkId() + "." + m.destination().nodeId());
+            } else {
+                i ++;
+            }
+
+        }
+
+    }
+
     /**
      * Receive function for router. Handles message-, move-, RouterSolicitation- events
      * @param source is where the event was sent from last
@@ -168,32 +200,50 @@ public class Router extends SimEnt{
          */
         if (event instanceof Message)
 		{
-            SimEnt sendNext;
+
             NetworkAddr destination     = ((Message) event).destination();
             NetworkAddr destinationId   = new NetworkAddr(destination.networkId(), destination.nodeId());
 
-			System.out.println("Router handles packet with seq: " + ((Message) event).seq()+" from node: "+((Message) event).source().networkId()+"." + ((Message) event).source().nodeId() );
+            System.out.println("Router handles packet with seq: " + ((Message) event).seq()+" from node: "+((Message) event).source().networkId()+"." + ((Message) event).source().nodeId() );
 
-            if (homeAgent == null || homeAgent.getCoa(destinationId) == null) {
+            SimEnt sendNext = getInterface(((Message) event).destination().networkId());
 
-                sendNext = getInterface(((Message) event).destination().networkId());
 
-                if (sendNext == null){
-                    System.out.println("Receiver not found in routing table, Packet was dropped");
-                    return;
-                }
+            /**
+             * Checks buffers TTL and send out messages from buffer
+             */
+            if (buffer != null) {
+                int droppedPackets = buffer.checkTTL();
+                System.out.println(droppedPackets + " packets was dropped due to expired TTL at time " + SimEngine.getTime());
+                checkBufferMessages();
+            }
 
-                System.out.println("Router sends to node: " + ((Message) event).destination().networkId()+"." + ((Message) event).destination().nodeId());
 
-            } else {
+            if (sendNext != null && ((Link)sendNext).isOnline()) {
+
+                sendPacket(sendNext, event);
+
+            } else if (homeAgent != null && homeAgent.getCoa(destinationId) != null){
 
                 NetworkAddr coa = homeAgent.getCoa(destinationId);
                 sendNext = getInterface(coa.networkId());
                 System.out.println("HA sends to node: " + coa.networkId() + "." + coa.nodeId());
+                send (sendNext, event, _now);
+
+            } else if (buffer != null) {
+
+                if (buffer.offer((Message) event)) {
+                    System.out.println("Message with seq: " + ((Message) event).seq() + " was added to the buffer at time " + SimEngine.getTime());
+                } else {
+                    System.out.println("Buffer was full. Message with seq: " + ((Message) event).seq() + " was dropped");
+                }
+
+
+            } else {
+
+                System.out.println("Receiver not found in routing table or link is offline, Packet was dropped");
 
             }
-
-            send (sendNext, event, _now);
 
         }
 

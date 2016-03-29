@@ -43,6 +43,13 @@ public class Link extends SimEnt{
 
 	}
 
+	public boolean isOnline(){
+		if (_connectorA != null && _connectorB != null)
+			return true;
+		return false;
+
+	}
+
 	/**
 	 * Forwards event to next destination
 	 * @param src is the sending source

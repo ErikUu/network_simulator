@@ -13,8 +13,8 @@ public class Buffer<T> {
      */
     LinkedList<BufferEntry> buffer = new LinkedList<>();
 
-    int bufferSize       = 0;
-    int TTL              = 0;
+    final int bufferSize;
+    final int TTL;
 
     /**
      * Constructor
@@ -50,17 +50,40 @@ public class Buffer<T> {
     }
 
     /**
+     * Gets the entry at the specified position
+     * @param i is the index
+     * @return the entry
+     */
+    public T get(int i){
+        if (i < buffer.size())
+            return (T) buffer.get(i).t;
+        return null;
+    }
+
+    public T remove(int i){
+        if (i < buffer.size())
+            return (T) buffer.remove(i);
+        return null;
+    }
+
+    /**
      * Removes expired entries in the buffer
      * @return number of removed entries
      */
     public int checkTTL(){
+
         int removedEntries = 0;
-        for(int i = 0; i < buffer.size(); i++){
-            if(SimEngine.getTime() > buffer.get(i).getEntryTime() + TTL){
+        int i = 0;
+
+        while (i < buffer.size()){
+            if(SimEngine.getTime() >= buffer.get(i).getEntryTime() + TTL){
                 buffer.remove(i);
                 removedEntries++;
+            } else {
+                i++;
             }
         }
+
         return removedEntries;
     }
 
@@ -69,7 +92,7 @@ public class Buffer<T> {
      * @return true if buffer is full
      */
     public boolean isFull(){
-        if(buffer.size() > bufferSize)
+        if(buffer.size() >= bufferSize)
             return true;
         return false;
     }
@@ -82,6 +105,20 @@ public class Buffer<T> {
         if(buffer.size() == 0)
             return true;
         return false;
+    }
+
+    /**
+     * @return size of buffer
+     */
+    public int size(){
+        return buffer.size();
+    }
+
+    /**
+     * @return max size of the buffer
+     */
+    public int maxSize(){
+        return bufferSize;
     }
 
     /**
